@@ -1,46 +1,57 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import { MdAddShoppingCart } from 'react-icons/md';
 import api from '../../service/api';
-import  { ProductList } from './style';
+import { ProductList } from './style';
 import { formatPrice } from '../../util/format';
 
+class Home extends Component {
+  state = {
+    products: []
+  };
 
-export default class Home extends Component{
+  async componentDidMount() {
+    const response = await api.get('products');
 
-    state = {
-        products: [],
-    }
+    const data = response.data.map(product => ({
+      ...product,
+      priceFormatted: formatPrice(product.price)
+    }));
 
-    async componentDidMount(){
-        const response = await api.get('products');
+    this.setState({ products: data });
+  }
 
-        const data = response.data.map(product => ({
-            ...product,
-            priceFormatted: formatPrice(product.price),
-          }));
+  handleAddProduct = product => {
+    const { dispatch } = this.props;
 
-        this.setState({products: data});
-    }
+    dispatch({
+      type: 'ADD_TO_CART',
+      product
+    });
+  };
 
-    render(){ 
-
-        const { products } = this.state;
-        return(
-           <ProductList>
-               {products.map(product => (
-                   <li>
-                       <img src={product.image} alt={product.title} />
-                       <strong>{product.title}</strong>
-                       <span>{product.priceFormatted}</span>
-                       <button>
-                           <div>
-                               <MdAddShoppingCart size={16} color="#fff"/>
-                           </div>
-                           <span>Adicionar ao carrinho</span>
-                       </button>
-                   </li>
-               ))}
-           </ProductList>
-        );
-    }
+  render() {
+    const { products } = this.state;
+    return (
+      <ProductList>
+        {products.map(product => (
+          <li>
+            <img src={product.image} alt={product.title} />
+            <strong>{product.title}</strong>
+            <span>{product.priceFormatted}</span>
+            <button
+              type="button"
+              onClick={() => this.handleAddProduct(product)}>
+              <div>
+                <MdAddShoppingCart size={16} color="#fff" />
+              </div>
+              <span>Adicionar ao carrinho</span>
+            </button>
+          </li>
+        ))}
+      </ProductList>
+    );
+  }
 }
+
+export default connect()(Home);
